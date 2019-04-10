@@ -122,6 +122,7 @@ class source_file_processor:
     for arg in additional_args:
       if (arg.startswith("-std=") or
           arg.startswith("-I") or
+          arg.startswith("-isystem") or
           arg.startswith("-D") or
           not arg.startswith("-")):
         self._additional_args.append(arg)
