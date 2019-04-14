@@ -120,12 +120,17 @@ class source_file_processor:
     # include paths, std flags and filenames
     self._additional_args = []
     for arg in additional_args:
+      if(arg.startswith("-isystem")):
+        includeNext=True
+        self._additional_args.append(arg)
+        continue
       if (arg.startswith("-std=") or
           arg.startswith("-I") or
-          arg.startswith("-isystem") or
           arg.startswith("-D") or
-          not arg.startswith("-")):
+          not arg.startswith("-") or
+          includeNext):
         self._additional_args.append(arg)
+        includeNext = False
 
 
   def _run_source_transformation(self, input_file_path, output_dir):
@@ -394,7 +399,7 @@ class hip_compiler:
     source_processor = source_file_processor(self.config, ".cpp", args)
     result = None
     try:
-    
+
       transformed_args = []
       extra_include_paths = set()
       for arg in args:
@@ -481,7 +486,7 @@ class hipcpu_compiler:
     return self.compiler != None
 
 ## Manages the configuration of the syclcc compiler wrapper;
-#  in particular evaluates command line arguments targeted 
+#  in particular evaluates command line arguments targeted
 #  at syclcc itself that should not be forwarded to the actual
 #  compiler.
 #  Supported arguments are:
@@ -536,9 +541,9 @@ class syclcc_config:
 
         self._platform = platform
       elif arg.startswith("--restrict-device-header-path=") or arg.startswith("-RDI="):
-        self._device_header_paths.append(self._parse_compound_argument(arg)) 
+        self._device_header_paths.append(self._parse_compound_argument(arg))
       elif arg == "--help":
-        print(""" 
+        print("""
 --force-alternative-compiler=<compiler>  Use the specified compiler
                directly without going through the hipSYCL toolchain
 --cuda-clang-compiler=<compiler>  Use an alternative version of Clang
@@ -646,7 +651,7 @@ class syclcc_config:
   @property
   def hipsycl_include_path(self):
     return os.path.join(self.hipsycl_install_path, "include")
-    
+
   @property
   def hipsycl_lib_path(self):
     return os.path.join(self.hipsycl_install_path,"lib")
@@ -656,7 +661,7 @@ class syclcc_config:
     return self._device_header_paths
 
   @property
-  def hipsycl_common_arguments(self):    
+  def hipsycl_common_arguments(self):
     args = ["-I" + self.hipsycl_include_path]
 
     libname = ""
@@ -669,7 +674,7 @@ class syclcc_config:
       libname = "hipSYCL_cpu"
     else:
       raise RuntimeError("syclcc configuration: Invalid platform encountered: " + self._platform)
-    
+
     # If we are not building hipSYCL itself, we also need to
     # link against the hipSYCL library
     if not self._is_bootstrap:
@@ -692,7 +697,7 @@ class syclcc_config:
                                       "hipSYCL"))
 
     return args
-    
+
 
 if __name__ == '__main__':
   args = sys.argv
@@ -745,7 +750,7 @@ if __name__ == '__main__':
                 print("Several platforms are available, but no platforms has been explicitly chosen.")
                 print("Please use the HIPSYCL_PLATFORM environment variable or the --hipsycl-platform= argument.")
                 sys.exit(-1)
-        
+
         # We couldn't find any available platforms - panic!
         if selected_platform == None:
           print("No available hipSYCL platforms found - neither CUDA, ROCm nor hipCPU are available")
@@ -762,4 +767,3 @@ if __name__ == '__main__':
   except Exception as e:
     print("syclcc fatal error: "+str(e))
     sys.exit(-1)
-
