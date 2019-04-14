@@ -22,6 +22,17 @@ if(HIPSYCL_ROCM_BACKEND_AVAILABLE)
   endif()
 endif()
 
+set(HIPSYCL_ENV $ENV{HIPSYCL_PLATFORM})
+if(HIPSYCL_ENV)
+    if(HIPSYCL_ENV MATCHES "hip")
+        message("Found HIPSYCL_PLATFORM from environment: hip/rocm")
+        set(HIPSYCL_ENV "rocm")
+    else()
+        message("Found HIPSYCL_PLATFORM from environment: ${HIPSYCL_ENV}")
+    endif()
+    set(HIPSYCL_PLATFORM ${HIPSYCL_ENV})
+endif()
+
 if(NOT HIPSYCL_PLATFORM)
   if(HIPSYCL_NUM_AVAILABLE_BACKENDS GREATER 1)
     message(SEND_ERROR "More than one hipSYCL backend is available.\n"
@@ -32,6 +43,7 @@ endif()
 
 unset(HIPSYCL_NUM_AVAILABLE_BACKENDS)
 unset(HIPSYCL_DEFAULT_PLATFORM)
+unset(HIPSYCL_ENV)
 
 set(CMAKE_SYCL_FLAGS "${CMAKE_SYCL_FLAGS} --hipsycl-platform=${HIPSYCL_PLATFORM}")
 
@@ -110,4 +122,3 @@ if(NOT CMAKE_SYCL_LINK_EXECUTABLE)
 endif()
 
 set(CMAKE_SYCL_INFORMATION_LOADED 1)
-
